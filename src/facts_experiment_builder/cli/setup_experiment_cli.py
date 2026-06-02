@@ -18,6 +18,7 @@ from facts_experiment_builder.core.experiment.exceptions import (
 )
 from facts_experiment_builder.core.experiment.experiment_skeleton import (
     ExperimentSkeleton,
+    parse_module_regions,
 )
 from facts_experiment_builder.infra.write_experiment_metadata import (
     write_metadata_yaml_jinja2,
@@ -32,6 +33,13 @@ import logging
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.WARNING)
+
+
+def configure_logging(debug_target):
+    if not debug_target:
+        return
+    name = None if debug_target == "all" else debug_target
+    logging.getLogger(name).setLevel(logging.INFO)
 
 
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
@@ -101,7 +109,31 @@ logging.basicConfig(level=logging.WARNING)
     default=None,
     help="Absolute path to shared input data to use in experiment.",
 )
-@click.option("--debug/--no-debug", default=False)
+@click.option(
+    "--projection-scale",
+    type=click.Choice(["global", "local", "both"], case_sensitive=False),
+    default="local",
+    show_default=True,
+    help="Projection scale for this experiment: 'global', 'local', or 'both'.",
+)
+@click.option(
+    "--module-regions",
+    type=str,
+    multiple=True,
+    help=(
+        "Specify regions for a module, format: module-name=REGION1,REGION2. "
+        "Repeatable. Example: --module-regions emulandice2-glaciers=RGI01,RGI02"
+    ),
+)
+@click.option(
+    "--debug", default=False, is_flag=True, help="Enable debug logging globally."
+)
+@click.option(
+    "--debug-target",
+    "debug_target",
+    default=None,
+    help="enable debug logging for a specific module only.",
+)
 def main(
     experiment_name,
     climate_step,
@@ -120,7 +152,10 @@ def main(
     location_file,
     module_specific_input_data,
     shared_input_data,
+    projection_scale,
+    module_regions,
     debug,
+    debug_target,
 ):
     """Set up a new experiment with setup-new-experiment CLI command.
     This function includes a number of steps: \n
@@ -130,9 +165,10 @@ def main(
         - If facts-total passed, collects workflows w/ user prompts
 
     """
-    if debug:
-        logging.root.setLevel(logging.INFO)
-
+    if debug_target:
+        configure_logging(debug_target)
+    elif debug:
+        configure_logging("all")
     console.rule(
         characters="- - ",
         style="rule",
@@ -153,6 +189,12 @@ def main(
     except ExperimentAlreadyExistsError as e:
         raise click.UsageError(str(e))
 
+    # Parse --module-regions tuple into dict before building skeleton
+    try:
+        parsed_module_regions = parse_module_regions(module_regions)
+    except ValueError as e:
+        raise click.UsageError(str(e))
+
     # Build the skeleton from CLI inputs (parses comma-separated strings, no YAML loading)
     try:
         skeleton = ExperimentSkeleton.from_cli_inputs(
@@ -161,10 +203,11 @@ def main(
             sealevel_step=sealevel_step,
             supplied_totaled_sealevel_step_data=supplied_totaled_sealevel_step_data,
             extremesealevel_step=extremesealevel_step,
+            module_regions=parsed_module_regions,
         )
     except ValueError as e:
         raise click.UsageError(
-            "Failed to create experient skeleton in application.setup_experiment: %s",
+            "Failed to create experiment skeleton in application.setup_experiment: %s",
             str(e),
         )
 
@@ -215,7 +258,6 @@ def main(
     console.rule(style="rule", title="Generating experiment-config.yaml")
 
     # Step 2: Create FactsExperiment from template
-
     experiment = experiment_skeleton_to_facts_experiment(
         experiment_name=experiment_name,
         skeleton=skeleton,
@@ -230,6 +272,7 @@ def main(
         module_specific_input_data=module_specific_input_data,
         experiment_specific_input_data=supplied_climate_step_data,
         shared_input_data=shared_input_data,
+        projection_scale=projection_scale,
     )
 
     # Step 4: Write metadata using Jinja2 templating (accepts FactsExperiment or dict)

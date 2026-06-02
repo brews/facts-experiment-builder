@@ -141,6 +141,19 @@ def _collect_workflow_output_paths_by_type(
     """
     paths: List[str] = []
     prefix = container_prefix.rstrip("/")
+
+    # List of substrings to skip to not include sub-regional outputs that are part of larger outputs
+    subregion_strings_to_skip = [
+        "wais",
+        "eais",
+        "pen",
+        "smb",
+        "SMB",
+        "WAIS",
+        "EAIS",
+        "PEN",
+    ]
+
     for mod in wf.module_names:
         out_section = metadata.get(mod, {}) or {}
         if not isinstance(out_section, dict):
@@ -158,49 +171,15 @@ def _collect_workflow_output_paths_by_type(
 
             else:
                 continue
+
             if p and isinstance(p, str) and ot == output_type:
-                if (
-                    "wais" in p
-                ):  # TODO this is a hacky fix, should prob be handled in module registry entry
+                # Do not pass through outputs that are components of a larger output unit
+                if p in subregion_strings_to_skip:
                     print(
-                        f"{p}: This output is component of a larger unit and is already represented elsewhere; skipping."
+                        f"{p}: This output is a component of a larger unit and is already represented elsewhere; skipping."
                     )
                     continue
-                elif "eais" in p:
-                    print(
-                        f"{p}: This output is component of a larger unit and is already represented elsewhere; skipping."
-                    )
-                    continue
-                elif "pen" in p:
-                    print(
-                        f"{p}: This output is component of a larger unit and is already represented elsewhere; skipping."
-                    )
-                    continue
-                elif "smb" in p:
-                    print(
-                        f"{p}: This output is component of a larger unit and is already represented elsewhere; skipping."
-                    )
-                    continue
-                elif "SMB" in p:
-                    print(
-                        f"{p}: This output is component of a larger unit and is already represented elsewhere; skipping."
-                    )
-                    continue
-                elif "WAIS" in p:
-                    print(
-                        f"{p}: This output is component of a larger unit and is already represented elsewhere; skipping."
-                    )
-                    continue
-                elif "EAIS" in p:
-                    print(
-                        f"{p}: This output is component of a larger unit and is already represented elsewhere; skipping."
-                    )
-                    continue
-                elif "PEN" in p:
-                    print(
-                        f"{p}: This output is component of a larger unit and is already represented elsewhere; skipping."
-                    )
-                    continue
+
                 paths.append(f"{prefix}/{p.strip()}")
     return paths
 
@@ -337,6 +316,10 @@ def generate_compose_from_metadata(metadata_path: Path) -> Dict[str, Any]:
         fingerprint_keys=_fp_keys,
     )
 
+    _suppress_output_types: set = (
+        {"local"} if experiment.projection_scale == "global" else set()
+    )
+
     temperature_module_name = experiment.climate_step.module_name or "NONE"
     sealevel_module_names = experiment.sealevel_step.module_names
     framework_module_names = (
@@ -390,7 +373,6 @@ def generate_compose_from_metadata(metadata_path: Path) -> Dict[str, Any]:
                 module_type="sealevel_module",
                 metadata=metadata,
             )
-            # modules.append(module)
             modules["sealevel_modules"][module_name] = module
             print(f"✓ Created {module_name} module")
         except (FileNotFoundError, ValueError, yaml.YAMLError) as e:
@@ -466,7 +448,8 @@ def generate_compose_from_metadata(metadata_path: Path) -> Dict[str, Any]:
     for module_name, module in modules["sealevel_modules"].items():
         service_name = module.module_name
         compose_service = module.generate_compose_service(
-            temperature_service_name=temperature_module_name
+            temperature_service_name=temperature_module_name,
+            suppress_output_types=_suppress_output_types,
         )
         services[service_name] = compose_service
 
@@ -486,6 +469,11 @@ def generate_compose_from_metadata(metadata_path: Path) -> Dict[str, Any]:
             for output_type in facts_total_config.get(
                 "output_types", ["global", "local"]
             ):
+                if output_type == "local" and experiment.projection_scale == "global":
+                    print(
+                        f"ℹ Skipping local facts-total for {wf_name} (projection_scale=global)"
+                    )
+                    continue
                 section = _build_facts_total_section_for_workflow(
                     wf, facts_total_image, output_type
                 )
@@ -511,7 +499,9 @@ def generate_compose_from_metadata(metadata_path: Path) -> Dict[str, Any]:
                     )
 
         # One ESL service per workflow when both workflows and esl_modules are specified
-        if esl_module_names:
+        if esl_module_names and experiment.projection_scale == "global":
+            print("ℹ Skipping per-workflow ESL services (projection_scale=global)")
+        elif esl_module_names:
             for esl_module_name in esl_module_names:
                 try:
                     esl_yaml_path = find_module_yaml_path(esl_module_name)
@@ -580,7 +570,7 @@ def generate_compose_from_metadata(metadata_path: Path) -> Dict[str, Any]:
                         )
 
     # When there are no workflows, add a single ESL service per ESL module
-    if not workflows:
+    if not workflows and experiment.projection_scale != "global":
         for _esl_name, esl_module in modules["esl_modules"].items():
             service_name = esl_module.module_name
             services[service_name] = esl_module.generate_compose_service()

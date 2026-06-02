@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from facts_experiment_builder.core.components.metadata_bundle import (
     create_metadata_bundle,
@@ -32,6 +32,9 @@ from facts_experiment_builder.infra.experiment_manager import (
     create_experiment_directory,
     create_experiment_directory_files,
 )
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def _climate_output_file_path(climate_module_name: str) -> Optional[str]:
@@ -55,15 +58,18 @@ def validate_skeleton_modules(skeleton: ExperimentSkeleton):
         ) from e
 
 
-def hydrate_sealevel_step(skeleton) -> SealevelStep:
+def hydrate_sealevel_step(
+    skeleton, top_level_context: Optional[Dict[str, Any]] = None
+) -> SealevelStep:
     if skeleton.sealevel_modules:
         sealevel_schemas = [
             load_facts_module_by_name(m) for m in skeleton.sealevel_modules
         ]
-        climate_data_file = skeleton.climate_data
-
         sealevel_step = SealevelStep.from_module_schemas(
-            sealevel_schemas, climate_data_file=climate_data_file
+            sealevel_schemas,
+            climate_data_file=skeleton.climate_data,
+            module_regions=skeleton.module_regions,
+            top_level_context=top_level_context,
         )
     else:
         sealevel_step = SealevelStep(
@@ -73,7 +79,10 @@ def hydrate_sealevel_step(skeleton) -> SealevelStep:
     return sealevel_step
 
 
-def hydrate_experiment(skeleton: ExperimentSkeleton) -> tuple:
+def hydrate_experiment(
+    skeleton: ExperimentSkeleton,
+    top_level_context: Optional[Dict[str, Any]] = None,
+) -> tuple:
     """Load module YAMLs from an ExperimentSkeleton and return the four hydrated steps.
 
     Errors from unknown module names propagate immediately — no silent failures.
@@ -87,7 +96,7 @@ def hydrate_experiment(skeleton: ExperimentSkeleton) -> tuple:
     else:
         climate_step = ClimateStep(alternate_climate_data=skeleton.climate_data)
 
-    sealevel_step = hydrate_sealevel_step(skeleton)
+    sealevel_step = hydrate_sealevel_step(skeleton, top_level_context=top_level_context)
 
     if skeleton.totaling_module:
         totaling_step = TotalingStep.from_module_schema(
@@ -146,6 +155,7 @@ def experiment_skeleton_to_facts_experiment(
     module_specific_input_data: Optional[str] = None,
     experiment_specific_input_data: Optional[str] = None,
     shared_input_data: Optional[str] = None,
+    projection_scale: str = "local",
 ) -> FactsExperiment:
     """
     Load module YAMLs from a skeleton and assemble a fully-formed FactsExperiment.
@@ -155,15 +165,8 @@ def experiment_skeleton_to_facts_experiment(
 
     # validate skeleton first
     validate_skeleton_modules(skeleton)
-
-    # hydrate skeleton to create steps
-    climate_step, sealevel_step, totaling_step, extreme_sealevel_step = (
-        hydrate_experiment(skeleton)
-    )
-
     # Load schemas to derive which top-level and fingerprint keys this experiment needs
     schemas = [load_facts_module_by_name(m) for m in skeleton.all_module_names]
-
     # Lookup table mapping schema key names (kebab and snake) to CLI-provided values
     cli_values: Dict[str, object] = {
         "pipeline-id": pipeline_id,
@@ -180,6 +183,13 @@ def experiment_skeleton_to_facts_experiment(
         "location-file": location_file,
         "location_file": location_file,
     }
+
+    # Build top-level context for multi-key filename_map resolution in module specs.
+    top_level_context = {k: v for k, v in cli_values.items() if v is not None}
+    # hydrate skeleton to create steps
+    climate_step, sealevel_step, totaling_step, extreme_sealevel_step = (
+        hydrate_experiment(skeleton, top_level_context=top_level_context)
+    )
 
     ## This section is for top-level / experiment-level fields
     # it extracts information for top-level params from module yamls
@@ -233,4 +243,5 @@ def experiment_skeleton_to_facts_experiment(
         paths=paths,
         fingerprint_params=fingerprint_params,
         workflows=skeleton.workflows,
+        projection_scale=projection_scale,
     )

@@ -34,6 +34,9 @@ YAML_TEMPLATE = """
 experiment_name:
 {{ format_value(experiment.experiment_name) }}
 
+projection_scale:
+{{ format_value(experiment.projection_scale) }}
+
 ##----- Top-level params -----##
 {% for key, value in experiment.top_level_params.items() %}
 {{ key }}:
@@ -121,7 +124,17 @@ def format_module_value(key: str, value: Any, indent: int = 2) -> List[str]:
             else:
                 lines.append(f"{indent_str}  {cli_value}  # user specified value")
         elif filename:
-            if isinstance(filename, str) and ("/" in filename or " " in filename):
+            if isinstance(filename, list):
+                for f in filename:
+                    if isinstance(f, str) and ("/" in f or " " in f):
+                        lines.append(
+                            f'{indent_str}  - "{f}"  # filename from module defaults'
+                        )
+                    else:
+                        lines.append(
+                            f"{indent_str}  - {f}  # filename from module defaults"
+                        )
+            elif isinstance(filename, str) and ("/" in filename or " " in filename):
                 lines.append(
                     f'{indent_str}  "{filename}"  # filename from module defaults'
                 )

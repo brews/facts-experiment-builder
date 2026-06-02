@@ -15,8 +15,27 @@ class SealevelStep(ExperimentStep):
 
     @classmethod
     def from_module_schemas(
-        cls, schemas: List[ModuleSchema], climate_data_file: Optional[str] = None
+        cls,
+        schemas: List[ModuleSchema],
+        climate_data_file: Optional[str] = None,
+        module_regions: Optional[Dict[str, List[str]]] = None,
+        top_level_context: Optional[Dict[str, Any]] = None,
     ) -> "SealevelStep":
+        """Build a SealevelStep from module schemas.
+
+        Args:
+            schemas: Module schemas for each sealevel module.
+            climate_data_file: Pre-filled climate data file path, if known.
+            module_regions: Optional dict mapping module names to a list of
+                region values (e.g. {"emulandice2-glaciers": ["RGI01", "RGI02"]}).
+                When provided, pre-fills the region option for that module so the
+                experiment-config renders a list value that generates multiple
+                ``--region`` flags in the compose command.
+            top_level_context: Top-level experiment params (e.g. {"pyear_end": 2300})
+                passed through to ModuleExperimentSpec for multi-key filename_map
+                resolution.
+        """
+        module_regions = module_regions or {}
         specs = []
         for schema in schemas:
             prefilled: Dict[str, str] = {}
@@ -26,9 +45,15 @@ class SealevelStep(ExperimentStep):
                     "climate_data_file"
                 }
                 prefilled = {k: climate_data_file for k in climate_keys}
+
+            regions = module_regions.get(schema.module_name)
+            prefilled_options = {"region": regions} if regions else None
             specs.append(
                 ModuleExperimentSpec.from_module_schema(
-                    schema, prefilled_inputs=prefilled
+                    schema,
+                    prefilled_inputs=prefilled,
+                    prefilled_options=prefilled_options,
+                    top_level_context=top_level_context,
                 )
             )
         return cls(module_specs_list=specs)
