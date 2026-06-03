@@ -14,3 +14,6 @@ The FACTS project supplies a number of example experiments which have been used 
 1. Find the experiment you'd like to replicate in the [experiment catalog](https://github.com/fact-sealevel/facts-experiment-catalog).
 2. Create a sub-directory in `experiments/`, the name of which matches the name entered in the `experiment-name:` field in the experiment config file for that experiment's catalog entry. 
 3. Download the experiment's `experiment-config.yaml` file from the catalog and place it in the experiment sub-directory you created. 
+
+> [!HINT]
+> We recommend starting with the example coupling-ssp585 [experiment](https://github.com/fact-sealevel/facts-experiment-catalog/blob/main/coupling-585-260603/experiment-config.yaml) listed in the experiment catalog.
