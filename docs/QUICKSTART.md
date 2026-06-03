@@ -47,6 +47,7 @@ my-facts-workspace/
     └── ... (one directory per module)
 ```
 
+For more detail on the `experiments/` directory, head [here](EXPERIMENTS.md)
 ---
 
 ## ii. Downloading module input data
@@ -77,7 +78,7 @@ echo "New_York	12	40.70	-74.01" > data/shared_input_data/location.lst
 
 ### Downloading module-specific input data for all modules
 
-The input data for each module is available at the Zenodo records shown below. You can also find this information in the README.md of each module in https://github.com/fact-sealevel.
+The input data for each module is available at the Zenodo records shown below. You can also find this information in the README.md of each module in https://github.com/fact-sealevel and in the module's entry in the [facts-module-registry](https://github.com/fact-sealevel/facts-module-registry).
 
 > [!NOTE]
 > For copy & paste scripts to download input data for individual modules, head to the [module-specific input data downloads](module_input_data_downloads.md) page.
@@ -108,12 +109,12 @@ curl -L https://zenodo.org/record/7478192/files/deconto21_AIS_preprocess_data.tg
 tar -xzf data/module_specific_input_data/deconto21-ais/deconto21_AIS_preprocess_data.tgz -C data/module_specific_input_data/deconto21-ais
 
 mkdir -p data/module_specific_input_data/ipccar5
-curl -L https://zenodo.org/record/7478192/files/ipccar5_glaciers_project_data.tgz -o data/module_specific_input_data/ipccar5-glaciers/ipccar5_glaciers_project_data.tgz
-tar -xzf data/module_specific_input_data/ipccar5-glaciers/ipccar5_glaciers_project_data.tgz -C data/module_specific_input_data/ipccar5-glaciers
+curl -L https://zenodo.org/record/7478192/files/ipccar5_glaciers_project_data.tgz -o data/module_specific_input_data/ipccar5/ipccar5_glaciers_project_data.tgz
+tar -xzf data/module_specific_input_data/ipccar5/ipccar5_glaciers_project_data.tgz -C data/module_specific_input_data/ipccar5
 
 mkdir -p data/module_specific_input_data/ipccar5
-curl -L https://zenodo.org/record/7478192/files/ipccar5_icesheets_project_data.tgz -o data/module_specific_input_data/ipccar5-icesheets/ipccar5_icesheets_project_data.tgz
-tar -xzf data/module_specific_input_data/ipccar5-icesheets/ipccar5_icesheets_project_data.tgz -C data/module_specific_input_data/ipccar5-icesheets
+curl -L https://zenodo.org/record/7478192/files/ipccar5_icesheets_project_data.tgz -o data/module_specific_input_data/ipccar5/ipccar5_icesheets_project_data.tgz
+tar -xzf data/module_specific_input_data/ipccar5/ipccar5_icesheets_project_data.tgz -C data/module_specific_input_data/ipccar5
 
 mkdir -p data/module_specific_input_data/larmip-ais
 curl -L https://zenodo.org/record/7478192/files/larmip_icesheet_fit_data.tgz -o data/module_specific_input_data/larmip-ais/larmip_icesheet_fit_data.tgz
