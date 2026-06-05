@@ -5,13 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.3.2]
+## [Unreleased]
 
 ### Added
 - `feb init` command that initializes a facts workspace directory by creating a blank `experiments/` dir and cloning the module registry repo ([PR #72](https://github.com/fact-sealevel/facts-experiment-builder/pull/72), [@e-marshall](https://github.com/e-marshall))
 - `feb check-data` command that checks to see which modules have input data downloaded at a provided location and if the contents match the expected structure and the files expected (as specified in the module registry) ([PR #72](https://github.com/fact-sealevel/facts-experiment-builder/pull/72), [@e-marshall](https://github.com/e-marshall)).
-
 - Initial support for emulandice2. Still does not correctly handle all region options or write localized outputs ([PR #72](https://github.com/fact-sealevel/facts-experiment-builder/pull/72), [@e-marshall](https://github.com/e-marshall)).
+- Expanded documentation surrounding experiments and downloading module input data ([PR #74](https://github.com/fact-sealevel/facts-experiment-builder/pull/74),  [@e-marshall](https://github.com/e-marshall)).
+- New component of `feb init` that checks if there are more recent remote changes in the facts-module-registry repo that is cloned locally in the workspace, automatically creates .gitignore in workspace if not present and adds facts-module-registry to it ([PR #74](https://github.com/fact-sealevel/facts-experiment-builder/pull/74),  [@e-marshall](https://github.com/e-marshall)).
 
 ### Fixed
 - Correct outputs now passed to totaling step ([PR #67](https://github.com/fact-sealevel/facts-experiment-builder/pull/67), [@e-marshall](https://github.com/e-marshall))
@@ -50,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release
 
-[0.3.2]: https://github.com/fact-sealevel/facts-experiment-builder/tag/v0.3.2
+[Unreleased]: https://github.com/fact-sealevel/facts-experiment-builder/compare/v0.3.1...HEAD
 [0.3.1]: https://github.com/fact-sealevel/facts-experiment-builder/tag/v0.3.1
 [0.3.0]: https://github.com/fact-sealevel/facts-experiment-builder/tag/v0.3.0
 [0.2.0]: https://github.com/fact-sealevel/facts-experiment-builder/tag/v0.2.0
