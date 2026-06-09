@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.0] - 2026-06-08
+## [0.4.0] - 2026-06-09
 
 ### Added
 - `feb init` command that initializes a facts workspace directory by creating a blank `experiments/` dir and cloning the module registry repo ([PR #72](https://github.com/fact-sealevel/facts-experiment-builder/pull/72), [@e-marshall](https://github.com/e-marshall))
