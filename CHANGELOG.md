@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.4.0] - 2026-06-08
 
 ### Added
 - `feb init` command that initializes a facts workspace directory by creating a blank `experiments/` dir and cloning the module registry repo ([PR #72](https://github.com/fact-sealevel/facts-experiment-builder/pull/72), [@e-marshall](https://github.com/e-marshall))
@@ -20,20 +20,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Changed quickstart guide name to setup guide in docs ([PR #75](https://github.com/fact-sealevel/facts-experiment-builder/pull/75), [@e-marshall](https://github.com/e-marshall))
 
-## [0.3.1]
+## [0.3.1] - 2026-05-05
 
 ### Fixed
 - Small typos in README ([7d984f7](7d984f72f740539850a4e42c8c6f683fbe647f5f), [@e-marshall](https://github.com/e-marshall))
 
 
-## [0.3.0] 
+## [0.3.0] - 2026-05-03
 
 ### Changed
 
 - Move module registry to external repository; rename `setup-new-experiment` -> `setup-experiment` ([PR #60](https://github.com/fact-sealevel/facts-experiment-builder/pull/60), [@e-marshall](https://github.com/e-marshall))
 
 
-## [0.2.0]
+## [0.2.0] - 2026-04-28
 
 ### Changed
 - Containers associated with all modules in module registry now point to 'latest' tag, previously some pointed at specific versions ([PR 43](https://github.com/fact-sealevel/facts-experiment-builder/pull/43), [@e-marshall](https://github.com/e-marshall))
@@ -49,11 +49,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Solved issues that prevented FEB from creating modules that include the [emulandice](https://github.com/fact-sealevel/emulandice) module ([PR #50](https://github.com/fact-sealevel/facts-experiment-builder/pull/50), [@e-marshall](https://github.com/e-marshall))
 - Seed is no longer the same across all modules in an experiment. Instead of an experiment-level (`top-level`) argument passed in `setup-new-experiment` and spec. in `experiment-config.yml`, it is hard-coded in each module's ModuleRegistry yaml to match its value in Facts1 development branch ([PR #57](https://github.com/fact-sealevel/facts-experiment-builder/pull/57), [@e-marshall](https://github.com/e-marshall)).
 
-## [0.1.0]
+## [0.1.0] - 2026-04-08
 
 - Initial release
 
-[Unreleased]: https://github.com/fact-sealevel/facts-experiment-builder/compare/v0.3.1...HEAD
+[0.4.0]: https://github.com/fact-sealevel/facts-experiment-builder/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/fact-sealevel/facts-experiment-builder/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/fact-sealevel/facts-experiment-builder/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/fact-sealevel/facts-experiment-builder/compare/v0.1.0...v0.2.0
