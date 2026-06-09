@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] 
 
-
+### Fixed
+- Bug related to `check-data` CLI command ([PR #77](https://github.com/fact-sealevel/facts-experiment-builder/pull/77), [@e-marshall](https://github.com/e-marshall))
+- Added missing tlm-sterodynamics input data to setup guide instructions ([PR #78](https://github.com/fact-sealevel/facts-experiment-builder/pull/78),  [@e-marshall](https://github.com/e-marshall))
 
 ## [0.4.0] - 2026-06-09
 
