@@ -1,8 +1,10 @@
+import yaml
 from unittest.mock import patch
 from facts_experiment_builder.application.setup_experiment import (
     hydrate_experiment,
     hydrate_sealevel_step,
 )
+from facts_experiment_builder.infra.write_experiment_metadata import format_module_value
 from facts_experiment_builder.core.experiment.experiment_skeleton import (
     ExperimentSkeleton,
 )
@@ -55,7 +57,7 @@ def test_hydrate_experiment_no_modules_returns_none_steps():
 
 
 @patch(
-    "facts_experiment_builder.application.setup_experiment.load_facts_module_by_name"
+    "facts_experiment_builder.application.setup_experiment.load_module_schema_by_name"
 )
 def test_hydrate_experiment_climate_module_produces_module_spec(mock_load):
     mock_load.return_value = make_module_schema("fair-temperature")
@@ -68,7 +70,7 @@ def test_hydrate_experiment_climate_module_produces_module_spec(mock_load):
 
 
 @patch(
-    "facts_experiment_builder.application.setup_experiment.load_facts_module_by_name"
+    "facts_experiment_builder.application.setup_experiment.load_module_schema_by_name"
 )
 def test_hydrate_experiment_totaling_module_produces_module_spec(mock_load):
     mock_load.return_value = make_module_schema("facts-total")
@@ -81,7 +83,7 @@ def test_hydrate_experiment_totaling_module_produces_module_spec(mock_load):
 
 
 @patch(
-    "facts_experiment_builder.application.setup_experiment.load_facts_module_by_name"
+    "facts_experiment_builder.application.setup_experiment.load_module_schema_by_name"
 )
 def test_hydrate_experiment_esl_module_produces_module_spec(mock_load):
     mock_load.return_value = make_module_schema("extremesealevel-pointsoverthreshold")
@@ -108,7 +110,7 @@ def test_hydrate_sealevel_step_no_modules_uses_supplied_totaled_sealevel_step_da
 
 
 @patch(
-    "facts_experiment_builder.application.setup_experiment.load_facts_module_by_name"
+    "facts_experiment_builder.application.setup_experiment.load_module_schema_by_name"
 )
 def test_hydrate_sealevel_step_loads_schemas_for_each_module(mock_load):
     mock_load.side_effect = [
@@ -125,7 +127,7 @@ def test_hydrate_sealevel_step_loads_schemas_for_each_module(mock_load):
 
 
 @patch(
-    "facts_experiment_builder.application.setup_experiment.load_facts_module_by_name"
+    "facts_experiment_builder.application.setup_experiment.load_module_schema_by_name"
 )
 def test_hydrate_sealevel_step_merges_climate_data_using_module_specific_input_key(
     mock_load,
@@ -171,7 +173,7 @@ def test_hydrate_sealevel_step_merges_climate_data_using_module_specific_input_k
 
 
 @patch(
-    "facts_experiment_builder.application.setup_experiment.load_facts_module_by_name"
+    "facts_experiment_builder.application.setup_experiment.load_module_schema_by_name"
 )
 def test_hydrate_sealevel_step_skips_merge_for_modules_without_climate_file(mock_load):
     mock_load.side_effect = [
@@ -193,7 +195,7 @@ def test_hydrate_sealevel_step_skips_merge_for_modules_without_climate_file(mock
 
 
 @patch(
-    "facts_experiment_builder.application.setup_experiment.load_facts_module_by_name"
+    "facts_experiment_builder.application.setup_experiment.load_module_schema_by_name"
 )
 def test_hydrate_sealevel_step_passes_top_level_context_to_specs(mock_load):
     """top_level_context (e.g. pyear_end) must reach ModuleExperimentSpec so
@@ -333,3 +335,17 @@ def test_collect_metadata_param_keys_empty_when_no_metadata_sources():
     )
     result = collect_metadata_param_keys([schema], "fingerprint_params")
     assert result == {}
+
+
+def test_format_module_value_empty_dict_roundtrips_as_empty_dict():
+    """An empty dict value (e.g. outputs: {}) must serialise as 'key: {}' so YAML
+    reads it back as an empty dict rather than None.
+
+    Regression test for the bug where extremesealevel-pointsoverthreshold.outputs
+    (which has no outputs) was serialised as a bare 'outputs:' key, causing YAML
+    to parse it as None and the adapter to raise a ValueError.
+    """
+    lines = format_module_value("outputs", {})
+    rendered = "\n".join(lines)
+    parsed = yaml.safe_load(rendered)
+    assert parsed == {"outputs": {}}, f"Expected {{'outputs': {{}}}}, got: {parsed}"
