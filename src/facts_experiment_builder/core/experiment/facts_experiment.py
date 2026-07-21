@@ -1,5 +1,7 @@
 """In-memory representation of an experiment (analogous to experiment-config.yaml)."""
 
+from dataclasses import dataclass
+
 from typing import Dict, Any, List, Optional, Set
 from datetime import datetime
 from facts_experiment_builder.core.workflow.workflow import (
@@ -14,6 +16,24 @@ from facts_experiment_builder.core.steps import (
     steps_from_metadata,
 )
 from facts_experiment_builder.core.components.metadata_bundle import is_metadata_value
+
+
+@dataclass
+class TopLevelParams:
+    pipeline_id: str
+    scenario: str
+    baseyear: int
+    pyear_start: int
+    pyear_end: int
+    pyear_step: int
+    nsamps: int
+    location_file: str
+
+
+@dataclass
+class ExperimentSpecificInputData:
+    climate_step_data: str
+    sealevel_step_data: str
 
 
 # Framework-level structural keys — these describe the experiment config format,
@@ -46,7 +66,8 @@ _STRUCTURAL_KEYS: Set[str] = (
 
 
 def _is_top_level_param_value(value: Any) -> bool:
-    """True if value looks like a top-level param (scalar, None, or clue/value bundle)."""
+    """True if value looks like a top-level param (scalar, None, or clue/value
+    bundle)."""
     if value is None or isinstance(value, (str, int, float, bool)):
         return True
     if isinstance(value, dict):
@@ -55,16 +76,16 @@ def _is_top_level_param_value(value: Any) -> bool:
 
 
 class FactsExperiment:
-    """
-    In-memory representation of an experiment (analoguous to experiment-config.yaml).
-    Used to generate run-environment artifacts (e.g. experiment-compose.yaml).
-    Loaded from or written to experiment-config.yaml.
+    """In-memory representation of an experiment (analoguous to experiment-config.yaml).
+
+    Used to generate run-environment artifacts (e.g. experiment-compose.yaml). Loaded
+    from or written to experiment-config.yaml.
     """
 
     def __init__(
         self,
         experiment_name: str,
-        top_level_params: Dict[str, Any],
+        top_level_params: Dict[str, Any],  # TopLevelParams
         climate_step: ClimateStep,
         sealevel_step: SealevelStep,
         totaling_step: TotalingStep,
@@ -97,9 +118,8 @@ class FactsExperiment:
 
     @property
     def top_level_params(self) -> Dict[str, Any]:
-        """Top-level parameters shared across modules
-        (pipeline-id, scenario, baseyear, pyear_start, pyear_end, pyear_step, nsamps, seed).
-        """
+        """Top-level parameters shared across modules (pipeline-id, scenario, baseyear,
+        pyear_start, pyear_end, pyear_step, nsamps, seed)."""
         return self._top_level_params
 
     @property

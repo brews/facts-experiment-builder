@@ -2,8 +2,10 @@
 
 import logging
 import pytest
+import yaml
+import click
 from pathlib import Path
-from unittest.mock import patch
+
 from facts_experiment_builder.core.module.arg_specs import (
     FingerprintParamSpec,
     InputArgSpec,
@@ -12,11 +14,25 @@ from facts_experiment_builder.core.module.arg_specs import (
 from facts_experiment_builder.core.module.module_schema import ModuleSchema
 from facts_experiment_builder.core.module.module_service_spec import (
     ModuleContainerImage,
-    ModuleInputPaths,
-    ModuleOutputPaths,
     ModuleServiceSpec,
     ModuleServiceSpecComponents,
 )
+from facts_experiment_builder.core.module.module_inputs_outputs import (
+    ModuleInputPaths,
+    ModuleOutputPaths,
+)
+
+
+@pytest.fixture
+def experiment_name_correct():
+    experiment_name = "experiments/my_test_experiment"
+    return experiment_name
+
+
+@pytest.fixture
+def experiment_name_no_parent():
+    experiment_name = "my_test_experiment"
+    return experiment_name
 
 
 @pytest.fixture(autouse=True)
@@ -42,13 +58,28 @@ def climate_required_true_module_yaml(tmp_path) -> Path:
 
 
 @pytest.fixture
-def patched_find_module_yaml_path(climate_required_true_module_yaml: Path):
-    """Patches find_module_yaml_path to return climate_required_module_yaml."""
-    with patch(
-        "facts_experiment_builder.application.generate_compose.find_module_yaml_path",
-        return_value=climate_required_true_module_yaml,
-    ) as mock:
-        yield mock
+def decline_extra_prompts(monkeypatch):
+    """Automatically decline any click.confirm prompts"""
+
+    def _unexpected(*a, **k):
+        raise AssertionError(f"Unexpected click.prompt call: {a} {k}")
+
+    monkeypatch.setattr(click, "prompt", _unexpected)
+    monkeypatch.setattr(click, "confirm", lambda *a, **k: False)
+
+
+@pytest.fixture
+def fake_registry(tmp_path):
+    def _make(modules: dict[str, dict]) -> Path:
+        registry_dir = tmp_path / "fake_registry"
+        for name, schema in modules.items():
+            mod_dir = registry_dir / name
+            mod_dir.mkdir(parents=True)
+            yaml_path = mod_dir / f"{name.replace('-', '_')}_module.yaml"
+            yaml_path.write_text(yaml.dump(schema))
+        return registry_dir
+
+    return _make
 
 
 @pytest.fixture
@@ -98,7 +129,7 @@ def random_module_specific_inputs_arg_spec():
 
     input_spec = InputArgSpec(
         name="random-input-file",
-        type="str",
+        type="file",
         source="module_inputs.inputs.randome_input_file",
         help="help string",
         filename="random_file_name.nc",
@@ -129,6 +160,19 @@ def fp_module_specific_arg_spec():
         type="file",
         source="module_inputs.fingerprint_params.fp_data",
         filename="fp_data.nc",
+        mount=MountSpec(
+            volume="module_specific_in", container_path="/mnt/module_specific_in"
+        ),
+    )
+
+
+@pytest.fixture
+def module_specific_arg_spec_missing_fname():
+    """mod specific param that shouldn't be skipped but also has no fname"""
+    return FingerprintParamSpec(
+        name="fp-data",
+        type="file",
+        source="module_inputs.fingerprint_params.fp_data",
         mount=MountSpec(
             volume="module_specific_in", container_path="/mnt/module_specific_in"
         ),

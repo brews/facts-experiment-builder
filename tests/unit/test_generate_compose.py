@@ -7,29 +7,7 @@ from facts_experiment_builder.application.generate_compose import (
     _validate_climate_file_inputs,
 )
 from facts_experiment_builder.core.module.module_schema import ModuleSchema
-from unittest.mock import MagicMock, patch
 from pathlib import Path
-
-
-def test_module_requires_climate_file_false_when_key_false(tmp_path: Path):
-    """Test _module_requires_climate_file function."""
-    module_yaml = tmp_path / "test_module_module.yaml"
-    module_yaml.write_text("climate_file_required: false \n")
-
-    with patch(
-        "facts_experiment_builder.application.generate_compose.find_module_yaml_path",
-        return_value=module_yaml,
-    ):
-        result = generate_compose._module_requires_climate_file("test-module")
-        assert not result
-
-
-def test_module_requires_climate_file_true_when_key_true(
-    climate_required_true_module_yaml, patched_find_module_yaml_path
-):
-    """Test _module_requires_climate_file function."""
-    result = generate_compose._module_requires_climate_file("test-module")
-    assert result
 
 
 def _make_climate_schema(input_name: str) -> ModuleSchema:
@@ -280,53 +258,3 @@ def test_extract_all_module_names_excludes_lowercase_none_temperature():
 def test_extract_all_module_names_empty_metadata():
     result = generate_compose._extract_all_module_names_from_manifest({})
     assert result == []
-
-
-def test_parse_experiment_returns_plan_with_correct_module_names():
-    """_parse_experiment is independently testable — no filesystem needed beyond patching the module loader."""
-    metadata = {
-        "experiment_name": "test-exp",
-        "pipeline-id": "abc123",
-        "nsamps": 100,
-        "scenario": "ssp585",
-        "pyear_start": 2020,
-        "pyear_end": 2100,
-        "pyear_step": 10,
-        "baseyear": 2005,
-        "module-specific-input-data": "/data/module",
-        "shared-input-data": "/data/shared",
-        "output-data-location": "/data/output",
-        "temperature_module": "fair-temperature",
-        "sealevel_modules": ["tlm-sterodynamics"],
-    }
-
-    mock_experiment = MagicMock()
-    mock_experiment.climate_step.module_name = "fair-temperature"
-    mock_experiment.sealevel_step.module_names = ["tlm-sterodynamics"]
-    mock_experiment.totaling_step.is_present = False
-    mock_experiment.totaling_step.module_name = None
-    mock_experiment.extreme_sealevel_step.is_present = False
-    mock_experiment.extreme_sealevel_step.module_name = None
-    mock_experiment.projection_scale = None
-
-    with (
-        patch(
-            "facts_experiment_builder.application.generate_compose.load_module_schema_by_name",
-            return_value=MagicMock(),
-        ),
-        patch(
-            "facts_experiment_builder.application.generate_compose.FactsExperiment.from_metadata_dict",
-            return_value=mock_experiment,
-        ),
-        patch(
-            "facts_experiment_builder.application.generate_compose.workflows_from_metadata",
-            return_value={},
-        ),
-    ):
-        plan = generate_compose._parse_experiment(metadata)
-
-    assert plan.temperature_module_name == "fair-temperature"
-    assert plan.sealevel_module_names == ["tlm-sterodynamics"]
-    assert plan.framework_module_names == []
-    assert plan.esl_module_names == []
-    assert plan.workflows == {}

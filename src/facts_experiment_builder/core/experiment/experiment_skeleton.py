@@ -2,6 +2,15 @@
 
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
+from facts_experiment_builder.core.experiment.module_name_validation import (
+    parse_module_list_str,
+)
+
+
+def is_totaling_needed(sealevel_step: str) -> bool:
+    sealevel_module_ls = parse_module_list_str(s=sealevel_step)
+
+    return len(sealevel_module_ls) > 1
 
 
 def parse_module_regions(module_regions_args: tuple) -> Dict[str, List[str]]:
@@ -31,9 +40,9 @@ def parse_module_regions(module_regions_args: tuple) -> Dict[str, List[str]]:
 class ExperimentSkeleton:
     """Captures module names / data paths and workflows from CLI inputs.
 
-    Created in the CLI before workflow collection and before any module YAMLs
-    are loaded.  Pass to ``hydrate_experiment()`` in the application layer to
-    produce a fully-formed ``FactsExperiment``.
+    Created in the CLI before workflow collection and before any module YAMLs are
+    loaded.  Pass to ``hydrate_experiment()`` in the application layer to produce a
+    fully-formed ``FactsExperiment``.
     """
 
     climate_module: Optional[str] = None  # None if data provided
@@ -42,13 +51,13 @@ class ExperimentSkeleton:
     supplied_totaled_sealevel_step_data: Optional[str] = (
         None  # None if modules provided
     )
-    totaling_module: Optional[str] = None  # None if no totaling step
+    totaling_module: Optional[str | None] = None  # None if no totaling step
     extremesealevel_module: Optional[str] = None  # None if no ESL step
     workflows: Dict[str, str] = field(default_factory=dict)
     module_regions: Dict[str, List[str]] = field(default_factory=dict)
 
     @classmethod
-    def from_cli_inputs(
+    def from_inputs(
         cls,
         climate_step: Optional[str],
         supplied_climate_step_data: Optional[str],
@@ -59,7 +68,7 @@ class ExperimentSkeleton:
     ) -> "ExperimentSkeleton":
         """Build a skeleton by parsing comma-separated CLI module strings."""
         from facts_experiment_builder.core.experiment.module_name_validation import (
-            parse_module_list,
+            parse_module_list_str,
         )
 
         # validate climate step inputs
@@ -81,16 +90,18 @@ class ExperimentSkeleton:
                 "(--supplied-totaled-sealevel-step-data), not both."
             )
 
-        climate_modules = parse_module_list(climate_step)
-        sealevel_modules = parse_module_list(sealevel_step)
-        esl_modules = parse_module_list(extremesealevel_step)
+        climate_modules = parse_module_list_str(climate_step)
+        sealevel_modules = parse_module_list_str(sealevel_step)
+        esl_modules = parse_module_list_str(extremesealevel_step)
 
         # Domain rules:
         # - totaling can't run if sealevel step bypassed
         # - totaling doesn't run if no sealevel modules are passed
         # - totaling runs if more than one sealevel module included
-        if supplied_totaled_sealevel_step_data:
+        if supplied_totaled_sealevel_step_data or not sealevel_modules:
             totaling_module = None
+        else:
+            totaling_module = "facts-total"
         if not supplied_totaled_sealevel_step_data and not sealevel_modules:
             totaling_module = None
         elif sealevel_modules:
