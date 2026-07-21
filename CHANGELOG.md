@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] 
 
+### Fixed
+- Added two fields to module yamls of sea-level modules: 1) `pass_to_total`, true by default; set to false to prevent auxiliary outputs (such as `quantiles.nc`) from being passed to totaling step, 2) `climate_output_type`, used to specify which outptus from the climate step is expected by a sea-level module (ie.`gsat.nc` or `ohc.nc`) ([PR #83](https://github.com/fact-sealevel/facts-experiment-builder/pull/83),  [@e-marshall](https://github.com/e-marshall))
+- Remove hard-coding of `"experiments/"` as parent directory of `--experiment-name`. A parent directory is not required but is recommended and should be included in `--experiment-name`. FEB resolves path based on `--root` and `--experiment-name` using `FileSystemExperimentStorage` obj ([PR #86](https://github.com/fact-sealevel/facts-experiment-builder/pull/86),  [@e-marshall](https://github.com/e-marshall))
+
+### Added
+- FEB recognizes and handles module schemas with entries in inputs section that are directories instead of files ([PR #82](https://github.com/fact-sealevel/facts-experiment-builder/pull/82),  [@e-marshall](https://github.com/e-marshall))
+- Added Pydantic models for structure of individual entries in each section (top-level params, options, inputs, outputs,...) of a module yaml file ([PR #83](https://github.com/fact-sealevel/facts-experiment-builder/pull/83),  [@e-marshall](https://github.com/e-marshall))
+- Add `module-registry` args to CLI commands that use registry and use `FileSystemModuleRegistry objs ([PR #86](https://github.com/fact-sealevel/facts-experiment-builder/pull/86),  [@e-marshall](https://github.com/e-marshall))
+- Add `root` arg to CLI commands that write files (`setup-experiment`, `generate-compose`) to give option of specifying alternative working directory ([PR #86](https://github.com/fact-sealevel/facts-experiment-builder/pull/86),  [@e-marshall](https://github.com/e-marshall))
+
+
+### Changed
+- `feb generate-compose` fails loudly if service creation fails for individual module or workflow ([PR #82](https://github.com/fact-sealevel/facts-experiment-builder/pull/82), [@e-marshall](https://github.com/e-marshall))
+- Small change to `InputArgSpec` to allow list of filenames to be passed in cases where multiple files may be passed for one input arg (ie. ssp-landwaterstorage). ([PR #85](https://github.com/fact-sealevel/facts-experiment-builder/pull/85),  [@e-marshall](https://github.com/e-marshall))
+- Refactor module registry and how it is used in codebase ([PR #86](https://github.com/fact-sealevel/facts-experiment-builder/pull/86),  [@e-marshall](https://github.com/e-marshall))
 
 
 ## [0.4.1] - 2026-06-09 
