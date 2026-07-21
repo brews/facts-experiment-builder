@@ -15,7 +15,7 @@
 - `feb check-data` to verify that all expected module input files are present, and 
 - `feb list-modules` to see all available modules in your registry. 
 
-An experiment execution file is created with `feb generate-compose`. This contains all of the information required to run an experiment in a given execution environment. For now, we provide a Docker Compose implementation (`experiment-compose.yaml`). In the future, we plan to include an [Async-Flow](https://radical-cybertools.github.io/radical.asyncflow/) (`async-flow-experiment.py`) or [Apptainer](https://apptainer.org/) implementation that should be more suitable for HPC systems.
+An experiment execution file is created with `feb generate-compose`. This contains all of the information required to run an experiment in a given execution environment. For now, we provide a Docker Compose implementation (`experiment-compose.yaml`). In the future, we plan to include an [Async-Flow](https://radical-cybertools.github.io/radical.asyncflow/) or [Apptainer](https://apptainer.org/) implementation that should be more suitable for HPC systems.
 
 >[!IMPORTANT]
 > Experiment configuration files are not executable files. They only specify an experiment, while implementation files such as `experiment-compose.yaml` created by `generate-compose` function as execution scripts. 
