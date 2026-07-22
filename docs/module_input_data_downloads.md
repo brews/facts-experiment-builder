@@ -38,7 +38,7 @@ tar -xzf data/module_specific_input_data/fair-temperature/fair_temperature_prepr
 
 ```bash
 mkdir -p data/module_specific_input_data/fair2-climate
-curl -L https://zenodo.org/records/11506798/files/fair2_climate_project_data.tgz -o data/module_specific_input_data/fair2-climate/fair2_climate_project_data.tgz
+curl -L https://zenodo.org/records/18190680/files/fair2_climate_project_data.tgz -o data/module_specific_input_data/fair2-climate/fair2_climate_project_data.tgz
 tar -xzf data/module_specific_input_data/fair2-climate/fair2_climate_project_data.tgz -C data/module_specific_input_data/fair2-climate
 ```
 
@@ -136,6 +136,7 @@ tar -xzf data/module_specific_input_data/kopp14-verticallandmotion/kopp14_vertic
 mkdir -p data/module_specific_input_data/oelsmann24-verticallandmotion
 curl -L https://zenodo.org/records/18199757/files/oelsmann24_vlm_data.tar.gz -o data/module_specific_input_data/oelsmann24-verticallandmotion/oelsmann24_vlm_data.tar.gz
 tar -xzf data/module_specific_input_data/oelsmann24-verticallandmotion/oelsmann24_vlm_data.tar.gz -C data/module_specific_input_data/oelsmann24-verticallandmotion
+mv data/module_specific_input_data/oelsmann24-verticallandmotion/data/* data/module_specific_input_data/oelsmann24-verticallandmotion/ && rmdir data/module_specific_input_data/oelsmann24-verticallandmotion/data
 ```
 
 ### nzinsargps-verticallandmotion
