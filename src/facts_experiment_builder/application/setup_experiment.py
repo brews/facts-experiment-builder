@@ -16,8 +16,8 @@ from facts_experiment_builder.core.experiment.experiment_skeleton import (
 from facts_experiment_builder.core.experiment.paths import (
     ExperimentName,
 )
-from facts_experiment_builder.io.write_experiment_metadata import (
-    write_metadata_yaml_jinja2,
+from facts_experiment_builder.io.write_config import (
+    write_config_jinja2,
 )
 from facts_experiment_builder.application.experiment_helpers import (
     experiment_skeleton_to_facts_experiment,
@@ -25,6 +25,9 @@ from facts_experiment_builder.application.experiment_helpers import (
 from facts_experiment_builder.io.experiment_storage import (
     # FileSystemExperimentStorage,
     make_output_dir,
+)
+from facts_experiment_builder.core.experiment.experiment_config import (
+    facts_experiment_to_config,
 )
 from facts_experiment_builder.core.experiment.paths import ExperimentPathContainer
 import logging
@@ -84,7 +87,6 @@ def prepare_experiment_setup(
     experiment_name_obj = ExperimentName.parse(raw_name=experiment_name)
 
     # Create experiment path from resolved root (handled in cli layer)
-    # experiment_path = storage.create(experiment_name_obj)
     experiment_path_obj = ExperimentPathContainer(
         workspace_dir=workspace_dir, experiment_name=experiment_name_obj
     )
@@ -172,7 +174,7 @@ def finalize_experiment_setup(
     See Also
     --------
     experiment_skeleton_to_facts_experiment : Builds the concrete experiment object.
-    write_metadata_yaml_jinja2 : Renders the configuration file from a template.
+    write_config_jinja2 : Renders the configuration file from a template.
 
     Notes
     -----
@@ -221,14 +223,12 @@ def finalize_experiment_setup(
         projection_scale=projection_scale,
         schemas=schemas,
     )
-    # Write metadata file using templtae
-    metadata_path = (
-        experiment_paths.config_path
-    )  # experiment_path / "experiment-config.yaml"
-
-    write_metadata_yaml_jinja2(
-        experiment=experiment_obj,
-        output_path=metadata_path,
+    # Write config file using templtae
+    config_path = experiment_paths.config_path
+    experiment_config = facts_experiment_to_config(
+        experiment_obj=experiment_obj,
         module_registry_version=version,
     )
-    return metadata_path
+
+    write_config_jinja2(experiment_config=experiment_config, config_path=config_path)
+    return config_path
