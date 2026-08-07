@@ -3,13 +3,16 @@
 import click
 from pathlib import Path
 
+# ---------------- CLI imports ---------------
 from facts_experiment_builder.cli.theme import console
 
+# ---------------- Application imports ---------------
 from facts_experiment_builder.application.check_data import (
     check_data,
     resolve_input_paths,
 )
 
+# ---------------- IO imports ---------------
 from facts_experiment_builder.io.module_registry import FileSystemModuleRegistry
 
 
@@ -91,7 +94,7 @@ def main(
     result = check_data(
         module_specific_input_dir=module_dir,
         shared_input_dir=shared_dir,
-        definitions=registry,
+        registry=registry,
     )
 
     # If there are no module results in the results object, print msg to user + return

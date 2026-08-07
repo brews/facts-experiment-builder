@@ -5,35 +5,40 @@ This script uses Jinja2-based YAML generation from setup_experiment.py.
 
 from pathlib import Path
 import click
-from facts_experiment_builder.cli.theme import console
-from facts_experiment_builder.core.experiment.experiment_skeleton import (
-    is_totaling_needed,
-)
 from pydantic import ValidationError
+
+# from typing import TYPE_CHECKING
+import logging
+
+# if TYPE_CHECKING:
+#     from facts_experiment_builder.core.experiment.experiment_skeleton import (
+#         ExperimentSkeleton,
+#     )
+# ---------------------- CLI imports ----------------------------
+from facts_experiment_builder.cli.theme import console
+from facts_experiment_builder.cli.workflow_prompts import (
+    _collect_workflows,
+)
+from facts_experiment_builder.cli.utils import configure_logging
+
+# ---------------------- Core imports ----------------------------
+from facts_experiment_builder.core.experiment.skeleton import (
+    is_totaling_needed,
+    ExperimentSkeleton,
+)
+from facts_experiment_builder.core.experiment.module_name_validation import (
+    validate_module_names,
+)
+
+# ---------------------- Application imports ----------------------------
 from facts_experiment_builder.application.setup_experiment import (
     prepare_experiment_setup,
     finalize_experiment_setup,
 )
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from facts_experiment_builder.core.experiment.experiment_skeleton import (
-        ExperimentSkeleton,
-    )
-from facts_experiment_builder.core.experiment.module_name_validation import (
-    validate_module_names,
-)
-from facts_experiment_builder.cli.workflow_prompts import (
-    _collect_workflows,
-)
-from facts_experiment_builder.core.experiment.paths import (
-    ExperimentPathContainer,
-)
-from facts_experiment_builder.cli.utils import configure_logging
-
+# ---------------------- IO imports ----------------------------
 from facts_experiment_builder.io.module_registry import FileSystemModuleRegistry
-
-import logging
+from facts_experiment_builder.io.paths import ExperimentPaths
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.WARNING)
@@ -236,8 +241,8 @@ def main(
     )
     skeleton = prepared_experiment.experiment_skeleton
     path_obj = prepared_experiment.experiment_paths
-    assert isinstance(path_obj, ExperimentPathContainer), (
-        f"Expected type = 'ExperimentPathContainer'. Received '{type(path_obj)}'"
+    assert isinstance(path_obj, ExperimentPaths), (
+        f"Expected type = 'ExperimentPahths'. Received '{type(path_obj)}'"
     )
     testing_schemas = {}
     for m in skeleton.all_module_names:

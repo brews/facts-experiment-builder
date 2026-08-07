@@ -3,34 +3,33 @@ from typing import Dict
 from dataclasses import dataclass
 import dataclasses
 from pathlib import Path
-from facts_experiment_builder.core.module.module_definition_source import (
-    ModuleDefinitionSource,
-)
-from facts_experiment_builder.core.experiment.facts_experiment import (
+import logging
+
+# ---------------- Core imports ---------------
+from facts_experiment_builder.core.experiment.experiment import (
     TopLevelParams,
 )
-from facts_experiment_builder.core.experiment.experiment_skeleton import (
+from facts_experiment_builder.core.experiment.skeleton import (
     ExperimentSkeleton,
     parse_module_regions,
 )
-from facts_experiment_builder.core.experiment.paths import (
-    ExperimentName,
-)
-from facts_experiment_builder.io.write_config import (
-    write_config_jinja2,
-)
-from facts_experiment_builder.core.experiment.experiment_skeleton import (
+from facts_experiment_builder.core.experiment.skeleton import (
     experiment_skeleton_to_facts_experiment,
 )
-from facts_experiment_builder.io.experiment_storage import (
-    # FileSystemExperimentStorage,
-    make_output_dir,
+from facts_experiment_builder.core.module.module_definition_source import (
+    ModuleDefinitionSource,
 )
 from facts_experiment_builder.core.experiment.experiment_config import (
     facts_experiment_to_config,
 )
-from facts_experiment_builder.core.experiment.paths import ExperimentPathContainer
-import logging
+
+# --------------- IO imports --------------
+from facts_experiment_builder.core.experiment.name import (
+    ExperimentName,
+)
+from facts_experiment_builder.io.write_config import write_config_jinja2
+
+from facts_experiment_builder.io.paths import ExperimentPaths, make_output_dir
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +38,7 @@ logger = logging.getLogger(__name__)
 class PrepareExperimentOutput:
     """Object to hold output of prepare_experiment_setup()."""
 
-    experiment_paths: ExperimentPathContainer
+    experiment_paths: ExperimentPaths
     experiment_skeleton: ExperimentSkeleton
 
 
@@ -52,7 +51,6 @@ def prepare_experiment_setup(
     supplied_totaled_sealevel_step_data: Path,
     extremesealevel_step: str,
     workspace_dir: Path,
-    # storage: FileSystemExperimentStorage,
 ) -> PrepareExperimentOutput:
     """Performs first stage of experiment setup and creates ExperimentSkeleton.
 
@@ -81,13 +79,13 @@ def prepare_experiment_setup(
     Returns
     -------
     PrepareExperimentOutput
-        Bundle containing the :class:`ExperimentPathContainer` for the experiment and the :class:`ExperimentSkeleton` built from the step configuration.
+        Bundle containing the :class:`ExperimentPaths` for the experiment and the :class:`ExperimentSkeleton` built from the step configuration.
     """
     # Create an experiment name object
     experiment_name_obj = ExperimentName.parse(raw_name=experiment_name)
 
     # Create experiment path from resolved root (handled in cli layer)
-    experiment_path_obj = ExperimentPathContainer(
+    experiment_path_obj = ExperimentPaths(
         workspace_dir=workspace_dir, experiment_name=experiment_name_obj
     )
     # Make direcotries related to this experiment
@@ -112,7 +110,7 @@ def prepare_experiment_setup(
 
 def finalize_experiment_setup(
     experiment_name: str,
-    experiment_paths: ExperimentPathContainer,
+    experiment_paths: ExperimentPaths,
     experiment_skeleton: ExperimentSkeleton,
     workflows_dict: Dict,
     pipeline_id: str,
@@ -136,7 +134,7 @@ def finalize_experiment_setup(
     ----------
     experiment_name : str
         Human-readable name of the experiment, recorded in the config file.
-    experiment_paths : ExperimentPathContainer
+    experiment_paths : ExperimentPaths
         Container holding the resolved filesystem locations for hte experiment, including the experiment directory and the configuration file path.
     experiment_skeleton : ExperimentSkeleton
         Paritally populated experiment descriptino produced in prepare_exerpiment_setup(). Supplies module names, and any climate or supplied totaled sea-level step data.

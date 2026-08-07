@@ -3,34 +3,33 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Set
+from typing import Dict, Any, List, Optional
+import logging
 
 from facts_experiment_builder.core.module.module_service_spec import (
     get_experiment_paths,
     build_module_service_spec,
 )
 from facts_experiment_builder.core.experiment.name import ExperimentName
-from facts_experiment_builder.core.experiment.paths import ExperimentPathContainer
-from facts_experiment_builder.core.experiment import FactsExperiment
-from facts_experiment_builder.core.module.module_schema import (
-    collect_metadata_param_keys,
-)
-from facts_experiment_builder.io.experiment_loader import (
-    load_experiment_config,
-)
 from facts_experiment_builder.core.module.module_service_spec import ModuleServiceSpec
-
-from facts_experiment_builder.core.workflow.workflow import (
-    Workflow,
-    workflows_from_metadata,
-)
-
 from facts_experiment_builder.core.module.service_spec_utils import expand_path
 from facts_experiment_builder.core.module.module_schema import (
     ModuleSchema,
 )
+from facts_experiment_builder.core.experiment.experiment_plan import (
+    _ExperimentPlan,
+    _make_experiment_plan,
+)
+from facts_experiment_builder.core.workflow import (
+    Workflow,
+)
 
-import logging
+# ---------------------- IO imports ----------------------------
+from facts_experiment_builder.io.paths import ExperimentPaths
+
+from facts_experiment_builder.io.experiment_loader import (
+    load_experiment_config,
+)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -56,19 +55,6 @@ _REQUIRED_FIELDS = [
 class PrepareComposeOutput:
     compose_dict: dict
     compose_path: Path
-
-
-@dataclass(frozen=True)
-class _ExperimentPlan:
-    """Result of phase 1: parsed experiment structure and module name lists."""
-
-    experiment: FactsExperiment
-    temperature_module_name: Optional[str]  # TODO rename to climate
-    sealevel_module_names: List[str]
-    framework_module_names: List[str]
-    esl_module_names: List[str]
-    suppress_output_types: Set[str]
-    workflows: Dict[str, Workflow]
 
 
 @dataclass(frozen=True)
@@ -291,66 +277,6 @@ def check_metadata_has_required_fields(metadata_obj, required_fields):
     return None
 
 
-def _make_experiment_plan(
-    metadata: Dict[str, Any], schemas: Dict[str, ModuleSchema]
-) -> _ExperimentPlan:
-    """Phase 1 of generating compose:
-    Validate metadata and build a typed experiment plan.
-
-    Ths fn is only data transformation, there should be no filesystem I/O.
-    """
-    # This should raise an error if user has not completed necessary fields in experiment-config.yaml
-    check_metadata_has_required_fields(
-        metadata_obj=metadata, required_fields=_REQUIRED_FIELDS
-    )
-
-    # Get the list of modules included in experiment from manifest in exp config
-    _manifest_module_names = _extract_all_module_names_from_manifest(metadata)
-    # Use list of modules to load schema for each module
-    list_of_schemas = list(schemas.values())
-    # Get keys for top level params and fingerprint params from each module in experiment
-    _top_level_keys = set(collect_metadata_param_keys(list_of_schemas, "top_level"))
-    _fp_keys = set(collect_metadata_param_keys(list_of_schemas, "fingerprint_params"))
-
-    # Create FactsExperiment obj from metadata dict
-    experiment = FactsExperiment.from_metadata_dict(
-        metadata,
-        top_level_keys=_top_level_keys,
-        fingerprint_keys=_fp_keys,
-    )
-    # Set output (local or global) based on user spec. in experiment config
-    suppress_output_types: Set[str] = (
-        {"local"} if experiment.projection_scale == "global" else set()
-    )
-    # Separate module names by step
-    temperature_module_name = experiment.climate_step.module_name or "NONE"
-    sealevel_module_names = experiment.sealevel_step.module_names
-    framework_module_names = (
-        [experiment.totaling_step.module_name]
-        if experiment.totaling_step.is_present
-        else []
-    )
-    esl_module_names = (
-        [experiment.extreme_sealevel_step.module_name]
-        if experiment.extreme_sealevel_step.is_present
-        else []
-    )
-    # Make workflow obj from metadata
-    workflows = workflows_from_metadata(metadata)
-
-    # Make an ExperimentPlan obj
-    # (first component of generate compose, used to build module spec objs)
-    return _ExperimentPlan(
-        experiment=experiment,
-        temperature_module_name=temperature_module_name,
-        sealevel_module_names=sealevel_module_names,
-        framework_module_names=framework_module_names,
-        esl_module_names=esl_module_names,
-        suppress_output_types=suppress_output_types,
-        workflows=workflows,
-    )
-
-
 def _build_module_specs(
     plan: _ExperimentPlan,
     metadata: Dict[str, Any],
@@ -366,16 +292,16 @@ def _build_module_specs(
     framework_modules: Dict[str, ModuleServiceSpec] = {}
     esl_modules: Dict[str, ModuleServiceSpec] = {}
 
-    temp_module_definition = schemas[plan.temperature_module_name]
-    if plan.temperature_module_name.upper() != "NONE":
-        temp_module_name = plan.temperature_module_name
+    temp_module_definition = schemas[plan.climate_module_name]
+    if plan.climate_module_name.upper() != "NONE":
+        temp_module_name = plan.climate_module_name
         temperature_module = build_module_service_spec(
             metadata=metadata,
             module_name=temp_module_name,
             known_module_names=known_module_names,
             module_definition=temp_module_definition,
         )
-        _log_success("Created %s module", plan.temperature_module_name)
+        _log_success("Created %s module", plan.climate_module_name)
     else:
         logger.info("No temperature module specified (NONE)")
 
@@ -645,7 +571,7 @@ def generate_compose(
 
     experiment_name_obj = ExperimentName.parse(raw_name=experiment_name)
 
-    experiment_paths = ExperimentPathContainer(
+    experiment_paths = ExperimentPaths(
         workspace_dir=workspace_dir, experiment_name=experiment_name_obj
     )
     experiment_paths.custom_compose_path = custom_compose_path
