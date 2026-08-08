@@ -290,7 +290,7 @@ def main(
         shared_input_data=shared_input_data,
         projection_scale=projection_scale,
         module_registry=registry,  # registry passed as protocol
-        experiment_repo=experiment_repository
+        experiment_repo=experiment_repository,
     )
 
     print_experiment_directory_created(experiment_name, path_obj)
